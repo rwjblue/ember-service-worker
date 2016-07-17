@@ -1,6 +1,17 @@
 export const VERSION = '{{BUILD_TIME}}';
+export const APP_VERSION = '{{APP_VERSION}}';
 
 let FETCH_HANDLERS = [];
+
+self.addEventListener('message', function messageEventListenerCallback(event) {
+  if (event.data && event.data.command === 'verify') {
+    let matchesVersion = event.data.appVersion === APP_VERSION;
+
+    event.ports[0].postMessage({
+      error: matchesVersion ? null : 'Service worker does not match expected application version.'
+    });
+  }
+});
 
 self.addEventListener('fetch', function fetchEventListenerCallback(event) {
   var resolver = function fetchResolver(resolve, reject, index) {

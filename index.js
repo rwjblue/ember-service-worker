@@ -10,9 +10,15 @@ var getBabelOptions = require('./lib/get-babel-options');
 var Rollup = require('./lib/rollup-with-dependencies');
 var rollupReplace = require('rollup-plugin-replace');
 var Funnel = require('broccoli-funnel');
+var hashForDep = require('hash-for-dep');
 
 module.exports = {
   name: 'ember-service-worker',
+
+  init: function() {
+    this._super.init && this._super.init.apply(this, arguments);
+    this._appVersionHash = hashForDep(this.project.root);
+  },
 
   included: function(app) {
     this._super.included && this._super.included.apply(this, arguments);
@@ -54,7 +60,8 @@ module.exports = {
 
       var rollupReplaceConfig = {
         include: '**/ember-service-worker/service-worker/index.js',
-        delimiters: ['{{', '}}']
+        delimiters: ['{{', '}}'],
+        APP_VERSION: this._appVersionHash
       };
 
       // define `BUILD_TIME` as a getter so that each time
@@ -92,6 +99,7 @@ module.exports = {
       var functionBody = fs.readFileSync(path.join(this.root, 'lib/registration.js'), { encoding: 'utf8' });
 
       functionBody = functionBody.replace(/{{rootURL}}/g, rootURL);
+      functionBody = functionBody.replace(/{{APP_VERSION}}/g, this._appVersionHash);
       return '<script>' + functionBody + '</script>';
     }
   },
